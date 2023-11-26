@@ -3,7 +3,6 @@ package com.inn.cafe.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,8 @@ import com.inn.cafe.jwt.JWTFilter;
 import com.inn.cafe.jwt.JWTUtils;
 import com.inn.cafe.service.UserService;
 import com.inn.cafe.util.CafeUtils;
+import com.inn.cafe.util.EmailUtils;
+import com.inn.cafe.wrapper.CafeUserWrapper;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -46,6 +47,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private JWTFilter jwtFilter;
+
+	@Autowired
+	private EmailUtils emailUtils;
 
 	@Override
 	public ResponseEntity<String> signUp(Map<String, String> reqMap) {
@@ -140,9 +144,14 @@ public class UserServiceImpl implements UserService {
 	public ResponseEntity<String> updateCafeUser(CafeUser user) {
 		try {
 			if (jwtFilter.isAdmin()) {
-				Optional<CafeUser> optionalCUserObj = userDao.findById(user.getId());
-				if (!optionalCUserObj.isEmpty()) {
-					userDao.updateCafeUserStatus(user.getStatus(), user.getId());
+				CafeUser cUserObj = userDao.findById(user.getId()).get();
+				if (cUserObj != null) {
+
+					Integer result = userDao.updateCafeUserStatus(user.getStatus(), user.getId());
+					logger.info("Update Result: ", result);
+
+					sendEmailToAllAdmins(user.getStatus(), cUserObj.getEmail(), userDao.getAllAdmins());
+
 					return CafeUtils.getResponseEntity("User Status Updated Successfully", HttpStatus.OK);
 				} else {
 					return CafeUtils.getResponseEntity("User ID does not exist", HttpStatus.OK);
@@ -155,6 +164,23 @@ public class UserServiceImpl implements UserService {
 			logger.error(e + "");
 		}
 		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	private void sendEmailToAllAdmins(String status, String email, List<CafeUserWrapper> allAdmins) {
+		List<String> allAdminsList = new ArrayList<>();
+		for (CafeUserWrapper obj : allAdmins) {
+			allAdminsList.add(obj.getEmail());
+		}
+		allAdminsList.remove(jwtFilter.getCurrentLoggedInUser());
+		if (status != null && status.equalsIgnoreCase(CafeConstants.ACTIVE_USER)) {
+			emailUtils.sendSimpleMessage(jwtFilter.getCurrentLoggedInUser(), "Account Approved",
+					"User:- " + email + "\n is approved by \n ADMIN:- " + jwtFilter.getCurrentLoggedInUser(),
+					allAdminsList);
+		} else {
+			emailUtils.sendSimpleMessage(jwtFilter.getCurrentLoggedInUser(), "Account Disabled",
+					"User:- " + email + "\n is disabled by \n ADMIN:- " + jwtFilter.getCurrentLoggedInUser(),
+					allAdminsList);
+		}
 	}
 
 }
