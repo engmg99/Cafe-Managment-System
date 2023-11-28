@@ -22,7 +22,7 @@ import com.inn.cafe.util.CafeUtils;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
 	@Autowired
 	private JWTFilter jwtFilter;
