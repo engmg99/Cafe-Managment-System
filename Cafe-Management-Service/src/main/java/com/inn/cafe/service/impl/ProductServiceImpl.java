@@ -102,7 +102,7 @@ public class ProductServiceImpl implements ProductService {
 						productDao.save(productObj);
 						return CafeUtils.getResponseEntity("Product Updated Successfully.", HttpStatus.OK);
 					} else {
-						return CafeUtils.getResponseEntity("Product does not exist with id: " + reqMap.get("id"),
+						return CafeUtils.getResponseEntity("Product does not exist with id- " + reqMap.get("id"),
 								HttpStatus.BAD_REQUEST);
 					}
 				} else {
@@ -115,6 +115,71 @@ public class ProductServiceImpl implements ProductService {
 			LOGGER.error(e + "");
 		}
 		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<String> deleteProduct(Long id) {
+		try {
+			if (jwtFilter.isAdmin()) {
+				Optional<Product> optional = productDao.findById(id);
+				if (!optional.isEmpty()) {
+					productDao.deleteById(id);
+					return CafeUtils.getResponseEntity("Product Deleted Successfully.", HttpStatus.OK);
+				} else {
+					return CafeUtils.getResponseEntity("Product does not exist with id- " + id, HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				return CafeUtils.getResponseEntity(CafeConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<String> updateProductStatus(Map<String, String> reqMap) {
+		try {
+			if (jwtFilter.isAdmin()) {
+				Optional<Product> optional = productDao.findById(Long.parseLong(reqMap.get("id")));
+				if (!optional.isEmpty()) {
+					productDao.updateProductStatus(reqMap.get("status"), Long.parseLong(reqMap.get("id")));
+					return CafeUtils.getResponseEntity("Product Status Updated Successfully.", HttpStatus.OK);
+				} else {
+					return CafeUtils.getResponseEntity("Product does not exist with id- " + reqMap.get("id"),
+							HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				return CafeUtils.getResponseEntity(CafeConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<List<ProductWrapper>> getProductsByCategory(Long id) {
+		try {
+			return new ResponseEntity<List<ProductWrapper>>(productDao.getProductByCategory(id), HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return new ResponseEntity<List<ProductWrapper>>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<List<ProductWrapper>> getProductById(Long id) {
+		try {
+			return new ResponseEntity<List<ProductWrapper>>(productDao.getProductById(id), HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return new ResponseEntity<List<ProductWrapper>>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }
