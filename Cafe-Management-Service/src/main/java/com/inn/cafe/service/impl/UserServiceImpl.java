@@ -28,7 +28,7 @@ import com.inn.cafe.wrapper.CafeUserWrapper;
 @Service
 public class UserServiceImpl implements UserService {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
 	@Autowired
 	private UserDao userDao;
@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public ResponseEntity<String> signUp(Map<String, String> reqMap) {
 		try {
-			logger.info("Inside UserServiceImpl.SignUp: ", reqMap);
+			LOGGER.info("Inside UserServiceImpl.SignUp: ", reqMap);
 			if (validateSignUpMap(reqMap)) {
 				CafeUser userObj = userDao.findByEmailId(reqMap.get("email"));
 				if (userObj == null) {
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e + "");
+			LOGGER.error(e + "");
 			return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public ResponseEntity<String> login(CafeUser user) {
-		logger.info("Inside UserServiceImpl.login");
+		LOGGER.info("Inside UserServiceImpl.login");
 		try {
 			// authenticating the email and pwd sent by user
 			Authentication auth = authManager
@@ -111,7 +111,7 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			logger.error(ex + "");
+			LOGGER.error(ex + "");
 		}
 		return new ResponseEntity<String>("{\"message\":\"Bad Credentials.\"}", HttpStatus.BAD_REQUEST);
 	}
@@ -135,7 +135,7 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e + "");
+			LOGGER.error(e + "");
 		}
 		return new ResponseEntity<List<CafeUser>>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -148,7 +148,7 @@ public class UserServiceImpl implements UserService {
 				if (cUserObj != null) {
 
 					Integer result = userDao.updateCafeUserStatus(user.getStatus(), user.getId());
-					logger.info("Update Result: ", result);
+					LOGGER.info("Update Result: ", result);
 
 					sendEmailToAllAdmins(user.getStatus(), cUserObj.getEmail(), userDao.getAllAdmins());
 
@@ -161,7 +161,7 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e + "");
+			LOGGER.error(e + "");
 		}
 		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -183,4 +183,56 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
+	@Override
+	public ResponseEntity<String> checkToken() {
+		try {
+			return CafeUtils.getResponseEntity("true", HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<String> changeUserPassword(Map<String, String> reqMap) {
+		try {
+			String emailIdOrUsername = jwtFilter.getCurrentLoggedInUser();
+			CafeUser userFromDB = userDao.findByEmail(emailIdOrUsername);
+			if (reqMap.isEmpty()) {
+				return CafeUtils.getResponseEntity("Old and new Passwords are required", HttpStatus.BAD_REQUEST);
+			}
+			if (userFromDB != null && reqMap.containsKey("oldPassword") && reqMap.containsKey("newPassword")) {
+				if (passwordEncoder.matches(reqMap.get("oldPassword"), userFromDB.getPassword())) {
+					userFromDB.setPassword(passwordEncoder.encode(reqMap.get("newPassword")));
+					userDao.save(userFromDB);
+					return CafeUtils.getResponseEntity("Password updated successfully.", HttpStatus.OK);
+				}
+				return CafeUtils.getResponseEntity("Incorrect Old Password", HttpStatus.BAD_REQUEST);
+			}
+			return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<String> userForgetPassword(Map<String, String> reqMap) {
+		try {
+			if (!reqMap.isEmpty() && reqMap.containsKey("email") && !reqMap.get("email").isBlank()) {
+				CafeUser userFromDB = userDao.findByEmail(reqMap.get("email"));
+				if (userFromDB != null) {
+					emailUtils.forgotPwdMail(userFromDB.getEmail(), "Credentials by CFM", userFromDB.getPassword());
+					return CafeUtils.getResponseEntity("Check your mail for password", HttpStatus.OK);
+				}
+			}
+			return CafeUtils.getResponseEntity("Email and email value is required", HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e + "");
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
 }

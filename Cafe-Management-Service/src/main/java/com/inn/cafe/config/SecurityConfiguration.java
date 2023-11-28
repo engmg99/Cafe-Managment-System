@@ -52,7 +52,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 			.authorizeRequests()
 			.antMatchers("/user/login",
 					"/user/sign-up",
-					"user/forgot-password")// in this we'll pass the URL which don't require the JWT Token
+					"/user/forgot-password")// in this we'll pass the URL which don't require the JWT Token
 			.permitAll()
 			.anyRequest()
 			.authenticated()

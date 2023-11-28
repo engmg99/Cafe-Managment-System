@@ -11,8 +11,14 @@ public interface UserService {
 	public ResponseEntity<String> signUp(Map<String, String> reqMap);
 
 	public ResponseEntity<String> login(CafeUser user);
-	
+
 	public ResponseEntity<List<CafeUser>> getAllCafeUsers();
-	
+
 	public ResponseEntity<String> updateCafeUser(CafeUser user);
+
+	public ResponseEntity<String> checkToken();
+
+	public ResponseEntity<String> changeUserPassword(Map<String, String> reqMap);
+
+	public ResponseEntity<String> userForgetPassword(Map<String, String> reqMap);
 }

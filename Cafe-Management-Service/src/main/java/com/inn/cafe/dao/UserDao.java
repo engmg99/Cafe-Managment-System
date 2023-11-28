@@ -27,4 +27,8 @@ public interface UserDao extends JpaRepository<CafeUser, Long> {
 
 	@Query("select new com.inn.cafe.wrapper.CafeUserWrapper(u.id, u.name, u.contactNumber, u.email, u.role, u.status) from CafeUser u where u.role='admin'")
 	public List<CafeUserWrapper> getAllAdmins();
+
+	// we dont need to implement this because we're using Entity property and JPA
+	// will handle it
+	public CafeUser findByEmail(String email);
 }

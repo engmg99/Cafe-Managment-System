@@ -2,9 +2,13 @@ package com.inn.cafe.util;
 
 import java.util.List;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,5 +34,19 @@ public class EmailUtils {
 			cc[i] = ccList.get(i);
 		}
 		return cc;
+	}
+
+	public void forgotPwdMail(String to, String subject, String pwd) throws MessagingException {
+		MimeMessage msg = emailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(msg, true);
+		helper.setFrom("goyalmunish9906@gmail.com");
+		helper.setTo(to);
+		helper.setSubject(subject);
+		String htmlMsg = "<p><b>Your Login details for Cafe Management System</b><br><b>Email: </b> " + to
+				+ " <br><b>Password: </b> " + pwd
+				+ "<br><a href=\"http://localhost:4200/\">Click here to login</a></p>";
+		msg.setContent(htmlMsg, "text/html");
+		emailSender.send(msg);
+
 	}
 }

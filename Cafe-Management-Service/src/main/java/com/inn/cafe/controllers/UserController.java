@@ -17,7 +17,6 @@ import com.inn.cafe.constants.CafeConstants;
 import com.inn.cafe.entities.CafeUser;
 import com.inn.cafe.service.UserService;
 import com.inn.cafe.util.CafeUtils;
-import com.itextpdf.text.pdf.PdfStructTreeController.returnType;
 
 @RestController
 @RequestMapping("/user")
@@ -55,9 +54,9 @@ public class UserController {
 		}
 		return new ResponseEntity<List<CafeUser>>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+
 	@PostMapping("/update")
-	public ResponseEntity<String> updateCafeUser(@RequestBody(required = true) CafeUser user){
+	public ResponseEntity<String> updateCafeUser(@RequestBody(required = true) CafeUser user) {
 		try {
 			return userService.updateCafeUser(user);
 		} catch (Exception e) {
@@ -65,5 +64,35 @@ public class UserController {
 		}
 		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+
+	@GetMapping("/checkToken")
+	public ResponseEntity<String> checkJwtToken() {
+		try {
+			return userService.checkToken();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@PostMapping("/change-password")
+	public ResponseEntity<String> changeUserPassword(@RequestBody(required = true) Map<String, String> requestMap) {
+		try {
+			return userService.changeUserPassword(requestMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@PostMapping("/forgot-password")
+	public ResponseEntity<String> userForgotPassword(@RequestBody(required = true) Map<String, String> requestMap) {
+		try {
+			return userService.userForgetPassword(requestMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
 }
